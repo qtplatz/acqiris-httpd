@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Virtual Oscilloscope</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+
+    <!-- jquery -->    
+    <script src="/bower_components/jquery/dist/jquery.min.js"></script>
+    
+    <!-- bootstrap -->    
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <script src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <!-- bootstrap-toggle -->
+    <link rel="stylesheet" href="../bower_components/bootstrap-toggle/css/bootstrap-toggle.min.css">
+    <script src="../bower_components/bootstrap-toggle/js/bootstrap-toggle.min.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/font-awesome/web-fonts-with-css/css/fontawesome.min.css">    
+    <!-- bootstrap-fileinput 
+    <link href="../bower_components/bootstrap-fileinput/css/fileinput.min.css" media="all" rel="stylesheet" type="text/css" />
+    
+    <script src="../bower_components/bootstrap-fileinput/js/plugins/piexif.min.js" type="text/javascript"></script>
+    <script src="../bower_components/bootstrap-fileinput/js/plugins/sortable.min.js" type="text/javascript"></script>
+    <script src="../bower_components/bootstrap-fileinput/js/plugins/purify.min.js" type="text/javascript"></script>
+    <script src="../bower_components/bootstrap/site/docs/4.1/assets/js/vendor/popper.min.js"></script>
+    
+    <script src="../bower_components/bootstrap-fileinput/js/fileinput.min.js"></script>
+    <script src="../bower_components/bootstrap-fileinput/js/locales/LANG.js"></script>
+
+    <script src="https://fastcdn.org/FileSaver.js/1.1.20151003/FileSaver.min.js"></script>
+    -->
+    <!-- d3 -->
+    <script src="../bower_components/d3/d3.min.js"></script>
+    
+    <!-- local scripts -->
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <script type="text/javascript" src="loadbanner.js"></script>
+    <script type="text/javascript" src="events.js"></script>
+    <script type="text/javascript" src="ctor.js"></script>
+
+  </head>
+
+  <body>
+    <header>
+      <img src="/logo-osaka-u.png" alt="Smiley face" height="31" width="280">
+      <div id="banner"><h2>$Id: 8ccd234fe26ec605e9b97d49e0b6d7fb2e10f094 $</h2></div>
+    </header>
+    
+    <section>
+      <div id="plot">
+        <svg>
+          <line x1 = "0" y1 = "0" 
+                x2 = "800" y2 = "300" style = "stroke:rgb(255,0,0);
+                                               stroke-width:2"/>          
+        </svg>
+      </div>
+    </section>
+    <!-- ------------------------------------ 
+    <section>
+      <form id="hvForm"></form>
+      <div class="container">
+        <table class="table">
+	  <tr>
+	    <td><em>Delay(us)</em></td>
+	    <td> <input type="number" id="Delay_SET" min=0 max=2000 step="1.0" onclick="changeDelay(this.value, this.id)" value="0" /> </td>
+	  </tr>
+	  <tr>
+	    <td><em>Width(us)</em></td>
+	    <td> <input type="number" id="Width_SET" min=0 max=5000 step="1.0" onclick="changeWidth(this.value, this.id)" value="5" /> </td>
+	  </tr>
+	</table>
+      </div>
+    </section>
+    -->
+    <footer>
+      <p>INFO: <span id="txtHint"></span></p> 
+      <img src="/logo.png" alt="Smiley face" height="60" width="200">
+    </footer>
+
+  </body>
+</html>

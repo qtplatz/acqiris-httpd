@@ -1,0 +1,26 @@
+*.ko.cmd
+.tmp_versions/
+Module.symvers
+*.mod.*
+modules.order
+
+build/
+*.orig
+*.o
+*.o.cmd
+*~
+*.scr
+# texdoc
+*.log
+*.aux
+*.out
+*.synctex.gz*
+*.img
+*.bak
+\#*
+.#*
+doc/drawings/*.pdf
+doc/texdoc/*.pdf
+#bower
+src/html/bower_components/
+compile_commands.json
