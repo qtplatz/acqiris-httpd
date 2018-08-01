@@ -53,7 +53,8 @@ main(int argc, char* argv[])
             ( "doc_root", po::value<std::string>()->default_value( DOC_ROOT ), "document root" )
             ( "verbose", po::value<int>()->default_value(0), "verbose level" )
             ( "debug,d", "debug mode" )
-            ( "simulate", "simulate mode" )            
+            ( "simulate", "simulate mode" )
+            ( "nogui",    "diable gui" )            
             ;
         po::store( po::command_line_parser( argc, argv ).options( desc ).allow_unregistered().run(), vm );
         po::notify( vm );
@@ -112,14 +113,16 @@ main(int argc, char* argv[])
         dataStorage::instance()->register_gui_handler( [&](auto w){ page_handler::instance()->handle_waveform( w ); } );
         
 #if HAVE_QT5
-        acqiris_gui::waveform_handler sender;
-        dataStorage::instance()->register_gui_handler( sender );
-        acqiris_gui::callback_handler::instance().method_changed_.connect( [&](auto& m){ task->prepare_for_run( m ); });
+        if ( ! vm.count( "nogui" ) ) {
+            acqiris_gui::waveform_handler sender;
+            dataStorage::instance()->register_gui_handler( sender );
+            acqiris_gui::callback_handler::instance().method_changed_.connect( [&](auto& m){ task->prepare_for_run( m ); });
+            
+            acqiris_gui::app::main( argc, argv );
         
-        acqiris_gui::app::main( argc, argv );
-        
-        s.io_service().stop();
-        io_service.stop();
+            s.io_service().stop();
+            io_service.stop();
+        }
 #endif
         for ( auto& t: threads )
             t.join();

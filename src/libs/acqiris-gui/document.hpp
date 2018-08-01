@@ -82,6 +82,7 @@ public:
     boost::signals2::connection connect_prepare( const prepare_for_run_t::slot_type & subscriber );
     boost::signals2::connection connect_event_out( const event_out_t::slot_type & subscriber );
     boost::signals2::connection connect_finalize( const final_close_t::slot_type & subscriber );
+    void drawWaveformCompleted();
     
 signals:
     void updateData();
@@ -89,7 +90,7 @@ signals:
 
 private:
     std::mutex mutex_;
-    std::deque< std::shared_ptr< const acqrscontrols::aqdrv4::waveform > > que_;
+    std::shared_ptr< const acqrscontrols::aqdrv4::waveform > que_;
     std::shared_ptr< acqrscontrols::aqdrv4::acqiris_method > method_;
     std::shared_ptr< acqrscontrols::aqdrv4::acqiris_method > adapted_method_;
     std::unique_ptr< QSettings > settings_;
@@ -98,4 +99,5 @@ private:
     prepare_for_run_t signal_prepare_for_run_;
     final_close_t signal_final_close_;
     event_out_t signal_event_out_;
+    std::atomic_flag lock_flag_;
 };

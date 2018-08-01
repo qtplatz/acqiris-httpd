@@ -1,6 +1,5 @@
 /**************************************************************************
-** Copyright (C) 2016 Toshinobu Hondo, Ph.D.
-** Copyright (C) 2016 MS-Cheminformatics LLC, Toin, Mie Japan
+** Copyright (C) 2016,2018 MS-Cheminformatics LLC, Toin, Mie Japan
 *
 ** Contact: toshi.hondo@qtplatz.com
 **
@@ -24,6 +23,7 @@
 
 #include "document.hpp"
 #include "digitizer.hpp"
+#include "log.hpp"
 #include <acqrscontrols/acqiris_client.hpp>
 #include <acqrscontrols/acqiris_waveform.hpp>
 #include <acqrscontrols/acqiris_method.hpp>
@@ -61,6 +61,7 @@ document::document( QObject * parent ) : QObject( parent )
                                                                                    , QLatin1String( "acqiris" )
                                                         ) )
                                        , temperature_( 0 )
+                                       , lock_flag_( ATOMIC_FLAG_INIT )
 {
 }
 
@@ -115,11 +116,17 @@ document::settings()
 }
 
 void
+document::drawWaveformCompleted()
+{
+    lock_flag_.clear();
+}
+
+void
 document::push( std::shared_ptr< const acqrscontrols::aqdrv4::waveform > d )
 {
     std::lock_guard< std::mutex > lock( mutex_ );
     
-    que_.emplace_back( d ); // push should be called in strand so that no race should be exist
+    que_ = d; 
 
     static auto tp_data_handled = std::chrono::steady_clock::now();
     static auto tp_rate_handled = std::chrono::steady_clock::now();
@@ -128,28 +135,16 @@ document::push( std::shared_ptr< const acqrscontrols::aqdrv4::waveform > d )
 
     auto tp = std::chrono::steady_clock::now();
     if ( ( tp - tp_data_handled ) > 200ms ) {
-        emit updateData();
+        if ( lock_flag_.test_and_set() )
+            emit updateData();
         tp_data_handled = tp;
     }
-
-    if ( que_.size() >= 1000 ) {
-        if ( tp - tp_rate_handled > 10s ) {
-            tp_rate_handled = tp;
-            double rate = ( que_.back()->timeStamp() - que_.front()->timeStamp() ) / ( que_.size() - 1 );
-            ADDEBUG() << "average trig. interval: " << rate / std::nano::den << "s";
-        }
-        que_.erase( que_.begin(), que_.begin() + ( que_.size() - 250 ) );
-    }
-    
 }
 
 std::shared_ptr< const acqrscontrols::aqdrv4::waveform >
 document::recentWaveform()
 {
-    std::lock_guard< std::mutex > lock( mutex_ );
-    if ( !que_.empty() )
-        return que_.back();
-    return nullptr;
+    return que_;
 }
 
 std::shared_ptr< const acqrscontrols::aqdrv4::acqiris_method >
@@ -231,7 +226,7 @@ void
 document::replyTemperature( int temp )
 {
     if ( temp >= 58 )
-        std::cout << "WARNING: Temperature " << temp << " too high" << std::endl;
+        acqiris::server::log() << "WARNING: Temperature " << temp << " too high";
         
     temperature_ = temp;
 }

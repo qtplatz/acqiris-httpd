@@ -346,7 +346,9 @@ void
 MainWindow::handleUpdateData()
 {
     if ( auto wform = document::instance()->recentWaveform() ) {
-        if ( auto view = findChild< WaveformView * >() )
+        if ( auto view = findChild< WaveformView * >() ) {
             view->setData( wform );
+            document::instance()->drawWaveformCompleted();
+        }
     }
 }

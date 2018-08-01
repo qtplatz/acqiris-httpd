@@ -41,6 +41,8 @@ add_library(
   document.hpp
   mainwindow.cpp
   mainwindow.hpp
+  log.cpp
+  log.hpp
   ${aqdrv4_sources}
   outputwidget.cpp
   outputwidget.hpp

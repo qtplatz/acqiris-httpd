@@ -15,3 +15,4 @@ if ( NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/html/bower_components )
     )
 endif()
 
+install ( DIRECTORY html DESTINATION bin COMPONENT httpd )
