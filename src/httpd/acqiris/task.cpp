@@ -32,6 +32,10 @@
 #include <adacquire/constants.hpp>
 #include <adportable/debug.hpp>
 #include <boost/asio.hpp>
+#include <fstream>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 using namespace acqiris;
 using namespace std::chrono_literals;
@@ -66,6 +70,13 @@ task::start()
     timer_.async_wait( [&]( const boost::system::error_code& ec ){ on_timer( ec ); });
 
     acqrscontrols::aqdrv4::acqiris_method m;
+
+    if ( auto pw = getpwuid( getuid() ) ) {
+        std::string home( pw->pw_dir );
+        std::ofstream of( ( home + "/.config/dc122.json" ).c_str() );
+        m.write_json( of, m );
+    }
+    
     prepare_for_run( m );
 }
 
