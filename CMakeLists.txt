@@ -23,7 +23,9 @@ if ( NOT QTPLATZ )
 endif()
 
 include ( ${QTPLATZ}/qtplatz-config.cmake )  # import libraries
-set( CMAKE_INSTALL_PREFIX "/opt/acqiris" )   # override qtplatz
+set ( CMAKE_INSTALL_PREFIX "/opt/${PROJECT_NAME}" )   # override qtplatz
+set ( CPACK_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" )
+set ( HTML_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}" )    # ${CMAKE_INSTALL_PREFIX}/html/index.html
 
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY         ${CMAKE_BINARY_DIR}/lib ) # static libs, dll's import lib/exp
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY         ${CMAKE_BINARY_DIR}/lib ) #plugins
@@ -55,6 +57,10 @@ find_package( Boost 1.62 REQUIRED COMPONENTS
   wserialization
   )
 
+#message( STATUS "QTPLATZ_LIBRARY_DIRS=" ${QTPLATZ_LIBRARY_DIRS} )
+set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${Boost_LIBRARY_DIRS}:${QTPLATZ_LIBRARY_DIRS}:${QTPLATZ_LIBRARY_DIRS}/qtplatz" )
+set( CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE )
+
 add_subdirectory ( src )
 
 set( CPACK_PACKAGE_VENDOR "MS-Cheminformatics LLC" )
@@ -64,7 +70,8 @@ set( CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR} )
 set( CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH} )
 set( CPACK_GENERATOR "DEB" )
 #set( CPACK_DEB_COMPONENT_INSTALL 1 )
-set( CPACK_PACKAGE_NAME map-fpga )
+set( CPACK_PACKAGE_NAME ${PROJECT_NAME} )
+set( CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_BINARY_DIR}/postinst;${CMAKE_BINARY_DIR}/prerm" )
 set( CPACK_DEBIAN_PACKAGE_MAINTAINER "T. Hondo <toshi.hondo@qtplatz.com>" )
 
 include( CPack )

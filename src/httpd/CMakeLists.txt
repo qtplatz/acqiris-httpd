@@ -9,8 +9,8 @@ if ( ${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
   if ( ${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
     find_package( Threads )
     configure_file( "${PROJECT_SOURCE_DIR}/httpd.sh.in" "${PROJECT_BINARY_DIR}/${PROJECT_NAME}" @ONLY )
-    configure_file( "${PROJECT_SOURCE_DIR}/postinst.in" "${PROJECT_BINARY_DIR}/postinst" @ONLY )
-    configure_file( "${PROJECT_SOURCE_DIR}/prerm.in" "${PROJECT_BINARY_DIR}/prerm" @ONLY )
+    configure_file( "${PROJECT_SOURCE_DIR}/postinst.in" "${CMAKE_BINARY_DIR}/postinst" @ONLY )
+    configure_file( "${PROJECT_SOURCE_DIR}/prerm.in" "${CMAKE_BINARY_DIR}/prerm" @ONLY )
   endif()
   
 endif()
@@ -19,8 +19,6 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/config.h.in"
   "${PROJECT_BINARY_DIR}/config.h"
   )
-
-message( STATUS ${CMAKE_INSTALL_DIR} )
 
 add_definitions( -DPID_NAME="/var/run/${PROJECT_NAME}.pid" -DDOC_ROOT="${CMAKE_INSTALL_PREFIX}/html" )
 
