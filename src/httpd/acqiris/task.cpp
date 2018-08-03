@@ -32,6 +32,7 @@
 #include <adacquire/constants.hpp>
 #include <adportable/debug.hpp>
 #include <boost/asio.hpp>
+#include <boost/filesystem.hpp>
 #include <fstream>
 #include <unistd.h>
 #include <sys/types.h>
@@ -54,6 +55,12 @@ task::task( boost::asio::io_service& t ) : io_service_( t )
     acquire_posted_.clear();
     digitizer_->initialize();
     digitizer_->findDevice();
+
+    if ( auto pw = getpwuid( getuid() ) ) {
+        config_dir_ = ( boost::filesystem::path( pw->pw_dir ) / ".config" ).string();
+        if ( ! boost::filesystem::exists( config_dir_ ) )
+            boost::filesystem::create_directory( config_dir_ );
+    }
 }
 
 task::~task()
@@ -65,18 +72,34 @@ task::~task()
 void
 task::start()
 {
+    acqrscontrols::aqdrv4::acqiris_method m;
+    
+    auto file = config_dir_ + "/dc122.json";
+    if ( boost::filesystem::exists( file ) ) {
+
+        std::ifstream in( file.c_str() );
+        acqrscontrols::aqdrv4::acqiris_method::read_json( in, m );
+
+        ADDEBUG() << "<========== json loaded";
+
+    } else {
+        auto trig = m.mutable_trig();
+        auto hor = m.mutable_hor();
+        auto ext = m.mutable_ext();
+        auto ch1 = m.mutable_ch1();
+
+        ADDEBUG() << "<========== json initialized";
+    }
+
+    {
+        std::ofstream o( ( config_dir_ + "/startup.json" ).c_str() );
+        acqrscontrols::aqdrv4::acqiris_method::write_json( o, m );
+    }
+    
     boost::system::error_code ec;
     timer_.expires_from_now( 3s, ec );
     timer_.async_wait( [&]( const boost::system::error_code& ec ){ on_timer( ec ); });
 
-    acqrscontrols::aqdrv4::acqiris_method m;
-
-    if ( auto pw = getpwuid( getuid() ) ) {
-        std::string home( pw->pw_dir );
-        std::ofstream of( ( home + "/.config/dc122.json" ).c_str() );
-        m.write_json( of, m );
-    }
-    
     prepare_for_run( m );
 }
 
@@ -103,6 +126,12 @@ task::on_timer( const boost::system::error_code& ec )
 void
 task::prepare_for_run( const acqrscontrols::aqdrv4::acqiris_method& m )
 {
+    {
+        std::string file( config_dir_ + "/dc122.json" );
+        std::ofstream of( file.c_str() );
+        m.write_json( of, m );
+    }
+    
     strand_.post( [=] { digitizer_->digitizer_setup( m ); } );
 
     if ( !std::atomic_flag_test_and_set( &acquire_posted_) )

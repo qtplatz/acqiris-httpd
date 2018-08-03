@@ -76,6 +76,7 @@ namespace acqiris {
         std::function< void( std::shared_ptr< acqrscontrols::aqdrv4::waveform > ) > push_handler_;
         acqiris_method_adapted_t acqiris_method_adapted_;
         replyTemperature_t replyTemperature_;
+        std::string config_dir_;
     };
 
 }

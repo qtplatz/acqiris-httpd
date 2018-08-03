@@ -50,6 +50,7 @@ include_directories(
 message( STATUS "QTDIR = " ${QTDIR} )
 
 find_package( Boost 1.62 REQUIRED COMPONENTS
+  filesystem
   program_options
   system
   timer
@@ -58,7 +59,13 @@ find_package( Boost 1.62 REQUIRED COMPONENTS
   )
 
 #message( STATUS "QTPLATZ_LIBRARY_DIRS=" ${QTPLATZ_LIBRARY_DIRS} )
-set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${Boost_LIBRARY_DIRS}:${QTPLATZ_LIBRARY_DIRS}:${QTPLATZ_LIBRARY_DIRS}/qtplatz" )
+set( CMAKE_INSTALL_RPATH
+  "${CMAKE_INSTALL_PREFIX}/lib"
+  "${Boost_LIBRARY_DIRS}"
+  "${QTPLATZ_LIBRARY_DIRS}"
+  "${QTPLATZ_LIBRARY_DIRS}/qtplatz"
+  )
+
 set( CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE )
 
 add_subdirectory ( src )
