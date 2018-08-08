@@ -187,7 +187,12 @@ digitizer::digitizer_setup( const acqrscontrols::aqdrv4::acqiris_method& m )
     // if ap240
     //status = AcqrsD1_configChannelCombination( inst_, 2, 1 );
     //checkError( inst_, status, "AcqrsD1_configChannelCombination", __LINE__  );
+    AcqrsD1_configControlIO( inst_, 1, 21, 0, 0 ); // 
+    checkError( inst_, status, "AcqrsD1_configControlIO", __LINE__  ); // MMCX I/O A <- Acquisition is active
 
+    AcqrsD1_configControlIO( inst_, 2, 22, 0, 0 ); // 
+    checkError( inst_, status, "AcqrsD1_configControlIO", __LINE__  ); // MMCX I/O B <- Trigger armed
+    
     // vertical setup
     // configVertical( channel = -1 must be done before configTrigSource, see Programmer's Guide p23 )
     if ( auto ext = m.ext() ) {

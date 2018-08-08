@@ -266,8 +266,9 @@ void
 page_handler::handle_waveform( std::shared_ptr< const acqrscontrols::aqdrv4::waveform > waveform )
 {
     if ( spin_flag_.test_and_set() ) {
-        auto p = std::async( std::launch::async, [=]{ return json_waveform()( waveform ); });
-        auto json = p.get();
+        // auto p = std::async( std::launch::async, [=]{ return json_waveform()( waveform ); });
+        // auto json = p.get();
+        auto json = json_waveform()( waveform );
         sse_handler_( json, std::to_string( event_id_++ ), "wave" );   // data, id, evnet
         spin_flag_.clear();
     }
