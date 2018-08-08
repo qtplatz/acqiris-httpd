@@ -115,7 +115,6 @@ task::on_timer( const boost::system::error_code& ec )
     if ( ec != boost::asio::error::operation_aborted ) {
         strand_.post( [this] {
                 int temp = digitizer_->readTemperature();
-                ADDEBUG() << "Temperature: " << temp;
                 page_handler::instance()->handle_temperature( temp );
             } );
         timer_.expires_from_now( 6s );

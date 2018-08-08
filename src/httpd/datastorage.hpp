@@ -38,6 +38,8 @@ namespace acqrscontrols { namespace aqdrv4 { class waveform; class acqiris_metho
 
 namespace acqiris {
 
+    class task;
+
     class dataStorage {
         dataStorage();
         ~dataStorage();
@@ -54,6 +56,7 @@ namespace acqiris {
         
         boost::signals2::connection register_blob_handler( const blob_handler_t::slot_type& );
         boost::signals2::connection register_gui_handler( const gui_handler_t::slot_type& );
+        void setTask( std::shared_ptr< acqiris::task > );
 
     private:
         std::mutex mutex_;
@@ -61,7 +64,11 @@ namespace acqiris {
         blob_handler_t blob_handler_;
         gui_handler_t gui_handler_;
         std::chrono::system_clock::time_point tp_blob_commit_;
+        std::chrono::system_clock::time_point tp_sse_commit_;
         uint32_t id_;
+        std::shared_ptr< acqiris::task > task_;
+        std::atomic_flag spin_flag_;
+        void handle_data_out();
     };
 }
 

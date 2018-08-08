@@ -58,6 +58,7 @@ dataStorage::~dataStorage()
 }
 
 dataStorage::dataStorage() : id_( 0 )
+                           , spin_flag_( ATOMIC_FLAG_INIT )
 {
 }
 
@@ -74,24 +75,40 @@ dataStorage::operator << ( std::shared_ptr< acqrscontrols::aqdrv4::waveform >&& 
         queue_.emplace_back( data );
     } while ( 0 );
     
-    auto ptr( queue_.back() );
-    
-    gui_handler_( ptr );
-
     using namespace std::chrono_literals;
     auto tp = std::chrono::system_clock::now();
-    if ( ( tp - tp_blob_commit_ ) >= 200ms && !queue_.empty() ) {
-        acqrscontrols::aqdrv4::waveforms vec;
-        do {
-            std::lock_guard< std::mutex > lock( mutex_ );
-            vec.data.reserve( queue_.size() );
-            std::move( queue_.begin(), queue_.end(), std::back_inserter( vec.data ) );
-            queue_.clear();
-        } while ( 0 );
-        std::ostringstream o;
-        adportable::binary::serialize<>()( vec, o );
-        blob_handler_( "waveforms", std::to_string( id_++ ), o.str() );
+
+    if ( tp - tp_sse_commit_ >= 100ms ) {
+        auto ptr( queue_.back() );
+        task_->io_service().post( [ptr,this]{ gui_handler_( ptr ); } );
+        tp_sse_commit_ = tp;
     }
+    
+    if ( ( tp - tp_blob_commit_ ) >= 250ms && !queue_.empty() ) {
+        if ( spin_flag_.test_and_set() ) {
+            task_->io_service().post( [&]{
+                    handle_data_out();
+                    spin_flag_.clear();
+                });
+            tp_blob_commit_ = tp;
+        }
+    }
+}
+
+void
+dataStorage::handle_data_out()
+{
+    acqrscontrols::aqdrv4::waveforms vec;
+    do {
+        std::lock_guard< std::mutex > lock( mutex_ );
+        vec.data.reserve( queue_.size() );
+        std::move( queue_.begin(), queue_.end(), std::back_inserter( vec.data ) );
+        queue_.clear();
+    } while ( 0 );
+    
+    std::ostringstream o;
+    adportable::binary::serialize<>()( vec, o );
+    blob_handler_( "waveforms", std::to_string( id_++ ), o.str() );
 }
 
 boost::signals2::connection
@@ -106,3 +123,8 @@ dataStorage::register_gui_handler( const gui_handler_t::slot_type& subscriber )
     return gui_handler_.connect( subscriber );
 }
 
+void
+dataStorage::setTask( std::shared_ptr< acqiris::task > task )
+{
+    task_ = task;
+}

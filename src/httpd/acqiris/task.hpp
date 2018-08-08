@@ -58,6 +58,8 @@ namespace acqiris {
         boost::signals2::connection connect_replyTemperature( const replyTemperature_t::slot_type & subscriber );
         void connect_push( std::function< void( std::shared_ptr< acqrscontrols::aqdrv4::waveform > ) > );
 
+        inline boost::asio::io_service& io_service() { return io_service_; }
+
     private:
         void on_timer( const boost::system::error_code& ec );
         void acquire();

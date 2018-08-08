@@ -29,12 +29,17 @@
 #include <adportable/debug.hpp>
 #include <acqrscontrols/acqiris_waveform.hpp>
 #include <boost/exception/all.hpp>
-#include <boost/format.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include <boost/property_tree/ptree.hpp>
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QByteArray>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -137,6 +142,45 @@ page_handler::handle_temperature( double temp )
 }
 
 struct json_waveform {
+#if 1    
+    std::string operator()( std::shared_ptr< const acqrscontrols::aqdrv4::waveform > d ) {
+
+        QJsonObject j_meta;
+        
+        const size_t ini = d->dataDesc().indexFirstPoint;
+
+        j_meta[ "serialNumber" ] = QString::number( d->serialNumber() );
+        j_meta[ "size" ] = QString::number( d->size() );
+        j_meta[ "delayTime" ] = d->delayTime();
+        j_meta[ "xMin" ] = d->delayTime();
+        j_meta[ "xMax" ] = d->delayTime() + d->size() * d->dataDesc().sampTime;
+        j_meta[ "xIncrement" ] = d->xIncrement();
+        j_meta[ "timeStamp" ] = QString::number( d->timeStamp() );
+        j_meta[ "vOffset" ] = d->vOffset();
+        j_meta[ "vGain" ] = d->vGain();
+        j_meta[ "wellKnownEvents" ] = QString::number( d->wellKnownEvents() );
+        j_meta[ "timeSinceEpoch" ] = QString::number( d->timeSinceEpoch() );
+        j_meta[ "timeSinceInject" ] = QString::number( d->timeSinceInject() );
+        j_meta[ "clsid" ] = QString::fromStdString( boost::lexical_cast< std::string >( d->clsid() ) );
+
+        QJsonObject j_waveform, j_obj;
+        QJsonArray j_data;
+        
+        std::vector< double > y( d->size() );
+        acqrscontrols::aqdrv4::waveform::transform( y, *d, 1000 ); // ->mV
+        std::for_each( y.begin(), y.end(), [&](auto d){ j_data.append( d ); });
+
+        j_waveform[ "meta" ] = j_meta;
+        j_waveform[ "data" ] = j_data;
+        j_obj[ "waveform" ] = j_waveform;
+
+        QJsonDocument j( j_obj );
+
+        QByteArray xdata( j.toJson( QJsonDocument::Compact ) );
+
+        return std::string ( xdata.data() );
+    }
+#else
     std::string operator()( std::shared_ptr< const acqrscontrols::aqdrv4::waveform > d ) {
 
         boost::property_tree::ptree pt, wform;
@@ -174,6 +218,7 @@ struct json_waveform {
 
         return o.str().substr( 0, o.str().find_first_of( "\r\n" ) );
     }
+#endif
 };
 
 void

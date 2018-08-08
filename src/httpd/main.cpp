@@ -94,6 +94,8 @@ main(int argc, char* argv[])
 
         threads.emplace_back( [&]{ io_service.run(); } );
         threads.emplace_back( [&]{ io_service.run(); } );
+        threads.emplace_back( [&]{ io_service.run(); } );
+        threads.emplace_back( [&]{ io_service.run(); } );
 
         // Initialise the server.
         acqiris::log() << boost::format( "started on %1% %2% %3%" )
@@ -107,15 +109,20 @@ main(int argc, char* argv[])
                                 , vm["port"].as< std::string >().c_str()
                                 , vm["doc_root"].as< std::string >().c_str() );
 
-        threads.emplace_back( [&]{ s.run(); } );
+        threads.emplace_back( [&]{ s.run(); } ); // httpd
+
         using acqiris::page_handler;
         using acqiris::dataStorage;
+
+        dataStorage::instance()->setTask( task );
+
+        // page_handler for send json waveform for web display
         dataStorage::instance()->register_gui_handler( [&](auto w){ page_handler::instance()->handle_waveform( w ); } );
         
 #if HAVE_QT5
         if ( ! vm.count( "nogui" ) ) {
             acqiris_gui::waveform_handler sender;
-            dataStorage::instance()->register_gui_handler( sender );
+            dataStorage::instance()->register_gui_handler( sender ); // local gui display
             acqiris_gui::callback_handler::instance().method_changed_.connect( [&](auto& m){ task->prepare_for_run( m ); });
             
             acqiris_gui::app::main( argc, argv );
