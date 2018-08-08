@@ -122,6 +122,44 @@ task::on_timer( const boost::system::error_code& ec )
     }
 }
 
+std::shared_ptr< const acqrscontrols::aqdrv4::acqiris_method >
+task::method() const
+{
+    return method_;
+}
+
+std::shared_ptr< acqrscontrols::aqdrv4::acqiris_method >
+task::modifyMethod( const std::string& key, double value, bool apply )
+{
+    auto m = std::make_shared< acqrscontrols::aqdrv4::acqiris_method >( *method_ ); // deep copy
+    if ( key == "delay" ) {
+        auto hor = m->mutable_hor();
+        hor->delayTime = value * 1e-6; // us -> s
+    } else if ( key == "width" ) {
+        auto hor = m->mutable_hor();
+        hor->nbrSamples = (value * 1e-6) / hor->sampInterval;
+    } else if ( key == "rate" ) {
+        auto hor = m->mutable_hor();
+        if ( value >= 4000 )
+            hor->sampInterval = 0.25e-9;
+        if ( value >= 2000 )
+            hor->sampInterval = 0.5e-9;
+        if ( value >= 1000 )
+            hor->sampInterval = 1.0e-9;
+        else // 500
+            hor->sampInterval = 2.0e-9;                        
+    } else if ( key == "fullscale" ) {
+        auto ch = m->mutable_ch1();
+        ch->fullScale = value;
+    } else if ( key == "offset" ) {
+        auto ch = m->mutable_ch1();
+        ch->offset = value;        
+    }
+    if ( apply )
+        prepare_for_run( *m );
+    return m;
+}
+
 void
 task::prepare_for_run( const acqrscontrols::aqdrv4::acqiris_method& m )
 {
@@ -130,6 +168,8 @@ task::prepare_for_run( const acqrscontrols::aqdrv4::acqiris_method& m )
         std::ofstream of( file.c_str() );
         m.write_json( of, m );
     }
+
+    method_ = std::make_shared< acqrscontrols::aqdrv4::acqiris_method >( m );
     
     strand_.post( [=] { digitizer_->digitizer_setup( m ); } );
 
@@ -197,3 +237,5 @@ task::acquire()
         std::this_thread::sleep_for( 1s );
     }
 }
+
+

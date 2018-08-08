@@ -115,6 +115,7 @@ main(int argc, char* argv[])
         using acqiris::dataStorage;
 
         dataStorage::instance()->setTask( task );
+        page_handler::instance()->setTask( task );
 
         // page_handler for send json waveform for web display
         dataStorage::instance()->register_gui_handler( [&](auto w){ page_handler::instance()->handle_waveform( w ); } );
@@ -131,6 +132,13 @@ main(int argc, char* argv[])
             io_service.stop();
         }
 #endif
+        if ( vm.count( "nogui" ) && __debug_mode__ ) {
+            int c;
+            do { c = getchar(); } while ( c > 0 && c != 'q' );
+            s.io_service().stop();
+            io_service.stop();            
+        }
+        
         for ( auto& t: threads )
             t.join();
 

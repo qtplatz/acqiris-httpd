@@ -39,6 +39,8 @@ namespace acqrscontrols { namespace aqdrv4 { class waveform; } }
 
 namespace acqiris {
 
+    class task;
+
     class page_handler {
         std::mutex mutex_;
         page_handler();
@@ -65,10 +67,13 @@ namespace acqiris {
         typedef boost::signals2::signal< void( const std::string&, const std::string&, const std::string& ) > sse_handler_t;
         boost::signals2::connection register_sse_handler( const sse_handler_t::slot_type& );
 
+        void setTask( std::shared_ptr< task > );
+
     private:
         sse_handler_t sse_handler_;
         uint32_t event_id_;
         std::atomic_flag spin_flag_;
+        std::shared_ptr< task > task_;
     };
 }
 

@@ -26,8 +26,10 @@
 #include "config.h"
 #include "page_handler.hpp"
 #include "log.hpp"
+#include "acqiris/task.hpp"
 #include <adportable/debug.hpp>
 #include <acqrscontrols/acqiris_waveform.hpp>
+#include <acqrscontrols/acqiris_method.hpp>
 #include <boost/exception/all.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -88,13 +90,25 @@ page_handler::http_request( const std::string& method, const std::string& reques
         rep = "SSE";
         return true;
     } else if ( request_path.find( "/api$banner" ) != std::string::npos ) {
-        rep += ( boost::format( "<h2>Waveform V%s</h2>" ) % PACKAGE_VERSION ).str();
+        rep += ( boost::format( "<h2>Virtual Oscilloscope V%s</h2>" ) % PACKAGE_VERSION ).str();
         return true;
+    } else if ( request_path.find( "/api$valueChanged" ) != std::string::npos ) {
+        QByteArray data( body.data(), body.size() );
+        QJsonObject obj = QJsonDocument::fromJson( data ).object();
+        std::string key = obj[ "id" ].toString().toStdString();
+        double value = obj[ "value" ].toString().toDouble();
+        ADDEBUG() << key << " = " << value << " <== " << body;
+        if ( auto m = task_->modifyMethod( key, value, true ) ) {
+            std::ostringstream o;
+            acqrscontrols::aqdrv4::acqiris_method::write_json( o, *m );
+            rep = o.str();
+        } else {
+            rep = "FAILED";
+        }
     } else {
         std::ostringstream o;
         o << "page_handler -- unknown request(" << method << ", " << request_path << ")";
         rep = o.str();
-        
     }
     return true;
 }
@@ -105,6 +119,11 @@ page_handler::register_sse_handler( const sse_handler_t::slot_type& subscriber )
     return sse_handler_.connect( subscriber );
 }
 
+void
+page_handler::setTask( std::shared_ptr< task > p )
+{
+    task_ = p;
+}
 
 void
 page_handler::handle_tick()
@@ -112,13 +131,23 @@ page_handler::handle_tick()
     struct timespec tp;
     
     if ( clock_gettime( CLOCK_MONOTONIC, &tp ) == 0 ) {
-        boost::property_tree::ptree tick;
         uint64_t timepoint = uint64_t( tp.tv_sec ) * std::nano::den + tp.tv_nsec;
+#if 1
+        QJsonObject j_tick, j_obj;
+        j_tick[ "time" ] = QString::number( tp.tv_sec );
+        j_tick[ "nsec" ] = QString::number( tp.tv_nsec );
+        j_obj[ "tick" ] = j_tick;
+        QJsonDocument j;
+        QByteArray xdata( j.toJson( QJsonDocument::Compact ) );
+        std::string json( xdata.data() );
+#else
+        boost::property_tree::ptree tick;
         tick.put( "tick.time", tp.tv_sec );
         tick.put( "tick.nsec", tp.tv_nsec );
         std::ostringstream o;
         boost::property_tree::write_json( o, tick, false );
         std::string json = o.str().substr( 0, o.str().find_first_of( "\r\n" ) );
+#endif
         sse_handler_( json, std::to_string( event_id_++ ), "tick" );   // data, id, evnet
     }
 }
@@ -129,6 +158,17 @@ page_handler::handle_temperature( double temp )
     struct timespec tp;
     
     if ( clock_gettime( CLOCK_MONOTONIC, &tp ) == 0 ) {
+#if 1
+        QJsonObject j_tick, j_obj;
+        j_tick[ "time" ] = QString::number( tp.tv_sec );
+        j_tick[ "nsec" ] = QString::number( tp.tv_nsec );
+        j_tick[ "temp" ] = temp;
+
+        j_obj[ "tick" ] = j_tick;
+        QJsonDocument j;
+        QByteArray xdata( j.toJson( QJsonDocument::Compact ) );
+        std::string json( xdata.data() );
+#else
         boost::property_tree::ptree tick;
         uint64_t timepoint = uint64_t( tp.tv_sec ) * std::nano::den + tp.tv_nsec;
         tick.put( "tick.time", tp.tv_sec );
@@ -137,6 +177,7 @@ page_handler::handle_temperature( double temp )
         std::ostringstream o;
         boost::property_tree::write_json( o, tick, false );
         std::string json = o.str().substr( 0, o.str().find_first_of( "\r\n" ) );
+#endif
         sse_handler_( json, std::to_string( event_id_++ ), "tick" );   // data, id, evnet
     }
 }

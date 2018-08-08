@@ -56,3 +56,6 @@ section > section { float:left; }
 }
 */
 
+.form-inline > * {
+   margin:10px 4px;
+}

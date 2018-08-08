@@ -60,6 +60,10 @@ namespace acqiris {
 
         inline boost::asio::io_service& io_service() { return io_service_; }
 
+        std::shared_ptr< const acqrscontrols::aqdrv4::acqiris_method > method() const;
+
+        std::shared_ptr< acqrscontrols::aqdrv4::acqiris_method > modifyMethod( const std::string& key, double value, bool apply = true );
+        
     private:
         void on_timer( const boost::system::error_code& ec );
         void acquire();
@@ -79,6 +83,7 @@ namespace acqiris {
         acqiris_method_adapted_t acqiris_method_adapted_;
         replyTemperature_t replyTemperature_;
         std::string config_dir_;
+        std::shared_ptr< acqrscontrols::aqdrv4::acqiris_method > method_;
     };
 
 }

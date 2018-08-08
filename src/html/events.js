@@ -55,3 +55,17 @@ source.addEventListener( 'wave', function( e ) {
     
 
 });
+
+function selChanged(value,id){
+    var json = JSON.stringify( { id, value } );
+    $.ajax({ type: "POST", url: "/api$valueChanged", dataType: "JSON", data: json }).done( function( response ){
+        console.log( "response: " + JSON.stringify( response ) );
+    });
+}
+
+function valueChanged(value,id){
+    var json = JSON.stringify( { id, value } );
+    $.ajax({ type: "POST", url: "/api$valueChanged", dataType: "JSON", data: json }).done( function( response ){
+        console.log( "response: " + JSON.stringify( response ) );
+    });     
+}
